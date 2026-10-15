@@ -1,0 +1,24 @@
+---
+title: About
+description: Setup and customization guide for this starter project.
+subtitle: Project Guide
+---
+
+import { Button } from 'astro-pure/user'
+
+This repository contains a customizable blog and website built with Astro and the Astro Pure theme.
+
+## Quick start
+
+1. Edit `src/site.config.ts` to set the site title, author, description, navigation, and social links.
+2. Set the canonical site URL in `astro.config.ts` before deploying.
+3. Add Markdown or MDX posts under `src/content/<year>/<category>/`.
+4. Replace the sample logo and favicon in `src/assets/` and `public/`.
+
+The pages under `src/data/pages/` provide editable examples for the About, Links, and Projects pages. The Training and Notes pages are optional features; remove their navigation entries and routes if they are not needed.
+
+## Build and deploy
+
+Run `npm install`, `npm run dev`, and `npm run build` to work locally and create a production build. A GitHub Actions workflow is included for GitHub Pages deployment.
+
+<Button title='Browse the sample post' href='/blog' class='w-fit' />

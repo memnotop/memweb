@@ -1,0 +1,11 @@
+---
+import PageLayout from '@/layouts/CommonPage.astro'
+
+import { Content, frontmatter, getHeadings } from '../../data/pages/projects.mdx'
+
+const headings = getHeadings()
+---
+
+<PageLayout title={frontmatter.title} {headings}>
+  <Content />
+</PageLayout>

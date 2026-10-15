@@ -1,0 +1,91 @@
+// @ts-check
+
+import { rehypeHeadingIds, unified } from '@astrojs/markdown-remark'
+import sitemap from '@astrojs/sitemap'
+import AstroPureIntegration from 'astro-pure'
+import { defineConfig } from 'astro/config'
+import rehypeKatex from 'rehype-katex'
+import remarkGfm from 'remark-gfm'
+import { remarkAlert } from 'remark-github-blockquote-alert'
+import remarkMath from 'remark-math'
+
+import rehypeAutolinkHeadings from './src/plugins/rehype-auto-link-headings.ts'
+import remarkObsidian from './src/plugins/remark-obsidian.ts'
+import {
+  addCopyButton,
+  addLanguage,
+  addTitle,
+  transformerNotationDiff,
+  transformerNotationHighlight,
+  updateStyle
+} from './src/plugins/shiki-transformers.ts'
+import config from './src/site.config.ts'
+
+const excludedIndexPaths = new Set(['/404', '/search'])
+
+function shouldIncludeInSitemap(page: string) {
+  const pathname = new URL(page).pathname.replace(/\/$/, '') || '/'
+  return !excludedIndexPaths.has(pathname)
+}
+
+export default defineConfig({
+  site: process.env.SITE_URL || 'https://example.com',
+  base: process.env.BASE_PATH || '/',
+  compressHTML: true,
+  trailingSlash: 'never',
+  image: {
+    breakpoints: [480, 720, 960, 1200],
+    responsiveStyles: true,
+    service: {
+      entrypoint: 'astro/assets/services/sharp'
+    }
+  },
+  integrations: [sitemap({ filter: shouldIncludeInSitemap }), AstroPureIntegration(config)],
+  prefetch: true,
+  server: {
+    host: true,
+    allowedHosts: ['localhost', '127.0.0.1']
+  },
+  markdown: {
+    // Astro 7 defaults to Sätteri. Keep Unified so the Obsidian, math and
+    // existing remark/rehype plugin pipeline continues to behave identically.
+    processor: unified({
+      remarkPlugins: [
+        remarkGfm,
+        remarkMath,
+        [remarkObsidian, { publicAssets: 'import' }],
+        remarkAlert
+      ],
+      rehypePlugins: [
+        [rehypeKatex, { strict: false }],
+        rehypeHeadingIds,
+        [
+          rehypeAutolinkHeadings,
+          {
+            behavior: 'append',
+            properties: { className: ['anchor'] },
+            content: { type: 'text', value: '#' }
+          }
+        ]
+      ]
+    }),
+    // https://docs.astro.build/en/guides/syntax-highlighting/
+    shikiConfig: {
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark'
+      },
+      transformers: [
+        transformerNotationDiff(),
+        transformerNotationHighlight(),
+        updateStyle(),
+        addTitle(),
+        addLanguage(),
+        addCopyButton(2000)
+      ]
+    }
+  },
+  experimental: {
+    contentIntellisense: true
+  }
+})

@@ -1,0 +1,115 @@
+---
+import { PostPreview } from 'astro-pure/components/pages'
+import { Button, Icon } from 'astro-pure/user'
+import PageLayout from '@/layouts/BaseLayout.astro'
+import { filterPostsByTopic, getSortedArticlePosts, getTopicSourceValues } from '@/utils/blog'
+import { blogTopics, type BlogTopic } from '@/site-config'
+
+import '@/assets/styles/blog-topic.css'
+
+interface Props {
+  topic: BlogTopic
+}
+
+const { topic } = Astro.props
+const { description, source, title } = topic
+const sourceLabel = source.field === 'tags' ? 'Tags' : 'Repositories'
+const posts = filterPostsByTopic(await getSortedArticlePosts(), topic)
+const sourceValues = getTopicSourceValues(posts, topic)
+
+const meta = {
+  description,
+  title
+}
+---
+
+<PageLayout {meta}>
+  <main class='topic-page mt-6 lg:mt-10'>
+    <div id='content-header' class='animate'>
+      <h1 class='topic-title'>
+        {title}
+        <span aria-hidden='true'>⌃</span>
+        <span aria-hidden='true'>⌄</span>
+      </h1>
+    </div>
+
+    <div class='topic-layout'>
+      <section aria-label={`${title} posts list`} class='animate' id='content'>
+        <div class='topic-list-head'>
+          <span>Page 1 - Showing {posts.length} of {posts.length} posts</span>
+        </div>
+
+        {
+          posts.length === 0 ? (
+            <div class='topic-empty'>
+              <h2>No posts yet.</h2>
+              <p>这个主题暂时还没有文章。</p>
+            </div>
+          ) : (
+            <ul class='topic-post-list'>
+              {posts.map((post, index) => (
+                <PostPreview
+                  as='h2'
+                  {post}
+                  detailed
+                  imageLoading={index === 0 ? 'eager' : 'lazy'}
+                />
+              ))}
+            </ul>
+          )
+        }
+      </section>
+
+      <aside class='topic-sidebar animate' id='sidebar'>
+        <section>
+          <h2>
+            <Icon name='package' class='topic-sidebar-icon' />
+            Collections
+          </h2>
+          <div class='topic-collection-list'>
+            {
+              blogTopics.map((item) => (
+                <a
+                  class={item.slug === topic.slug ? 'active' : ''}
+                  href={`/blog/${item.slug}`}
+                  data-astro-prefetch
+                >
+                  <span>
+                    <strong>{item.title}</strong>
+                    <small>{item.description}</small>
+                  </span>
+                  <span aria-hidden='true'>›</span>
+                </a>
+              ))
+            }
+          </div>
+          <a class='topic-view-all' href='/blog'>View all →</a>
+        </section>
+
+        <section>
+          <h2>
+            <Icon name='tag-2' class='topic-sidebar-icon' />
+            {sourceLabel}
+          </h2>
+          {
+            sourceValues.length > 0 ? (
+              <ul class='topic-tags'>
+                {sourceValues.map((value) => (
+                  <li>
+                    <Button
+                      title={value}
+                      href={source.field === 'tags' ? `/tags/${value}` : undefined}
+                      variant='pill'
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class='topic-muted'>暂无{sourceLabel.toLowerCase()}。</p>
+            )
+          }
+        </section>
+      </aside>
+    </div>
+  </main>
+</PageLayout>

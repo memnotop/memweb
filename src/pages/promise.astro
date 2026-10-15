@@ -1,0 +1,14 @@
+---
+import PageLayout from '@/layouts/BaseLayout.astro'
+
+import { Content, frontmatter } from '../data/pages/promise.mdx'
+
+const meta = {
+  description: frontmatter.description,
+  title: frontmatter.title
+}
+---
+
+<PageLayout {meta}>
+  <Content />
+</PageLayout>

@@ -1,0 +1,95 @@
+---
+import { Button, Icon } from 'astro-pure/user'
+import PageLayout from '@/layouts/BaseLayout.astro'
+import Section from '@/components/home/Section.astro'
+import { getSortedArticlePosts } from '@/utils/blog'
+import config from '@/site-config'
+
+import '@/assets/styles/mem-home.css'
+
+const articlePosts = await getSortedArticlePosts()
+const dateFormatter = new Intl.DateTimeFormat('en', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric'
+})
+const latestPostDate = articlePosts[0]?.data.updatedDate ?? articlePosts[0]?.data.publishDate
+const totalWords = articlePosts.reduce((sum, post) => {
+  const body = 'body' in post && typeof post.body === 'string' ? post.body : ''
+  return sum + body.replace(/---[\s\S]*?---/, '').replace(/\s/g, '').length
+}, 0)
+---
+
+<PageLayout meta={{ title: 'Home' }} highlightColor='#659EB9'>
+  <main class='mem-home flex w-full flex-col items-center'>
+    <section
+      class='mem-hero animate mb-12 flex w-full flex-col items-center justify-center gap-8 md:flex-row md:gap-10'
+      id='content-header'
+    >
+      <div class='mem-avatar-link' aria-hidden='true'>
+        <img
+          src='/favicon/favicon.svg'
+          alt=''
+          class='mem-avatar h-28 w-auto rounded-2xl border p-1'
+        />
+      </div>
+
+      <div class='mem-hero-text flex flex-col items-center gap-y-5 md:items-start'>
+        <h1 class='mem-title font-bold'>{config.author}</h1>
+        <div class='mem-labels flex flex-wrap justify-center gap-3 md:justify-start'>
+          <span class='mem-label'>Astro</span>
+          <span class='mem-label'>Markdown</span>
+          <span class='mem-label'>GitHub Pages</span>
+        </div>
+      </div>
+    </section>
+
+    <div id='content' class='mem-content animate flex flex-col gap-y-14 md:w-[88%] lg:w-[86%]'>
+      <div class='flex justify-center'>
+        <blockquote class='mem-home-quote'>
+          <div class='mem-home-quote-card'>
+            <span
+              class='relative flex h-2 w-2 flex-none items-center justify-center'
+              aria-hidden='true'
+            >
+              <span
+                class='absolute size-2 animate-ping rounded-full border border-green-400 bg-green-400 opacity-75'
+              ></span>
+              <span class='size-2 rounded-full bg-green-400'></span>
+            </span>
+            <p class='mem-home-quote-sentence'>A clean starting point for your own website.</p>
+          </div>
+        </blockquote>
+      </div>
+
+      <Section title='About'>
+        <p class='mem-subtitle text-muted-foreground mt-1'>Welcome</p>
+        <div class='mem-about-copy flex flex-col gap-2 leading-7 text-muted-foreground'>
+          <p>This open-source starter helps you build a customizable blog with Astro.</p>
+          <p>Replace the sample content and update the site configuration to make it yours.</p>
+        </div>
+        <Button title='Read the setup guide' class='w-fit self-end' href='/about' style='ahead' />
+      </Section>
+
+      <Section title='Statistics' class='mem-centered-section'>
+        <div class='mem-stat-grid'>
+          <div class='mem-stat-card'>
+            <Icon name='document' class='size-6' />
+            <strong>{articlePosts.length}</strong>
+            <span>Posts</span>
+          </div>
+          <div class='mem-stat-card'>
+            <Icon name='calendar' class='size-6' />
+            <strong>{latestPostDate ? dateFormatter.format(latestPostDate) : '—'}</strong>
+            <span>Last Updated</span>
+          </div>
+          <div class='mem-stat-card'>
+            <Icon name='hashtag' class='size-6' />
+            <strong>{totalWords.toLocaleString('en')}</strong>
+            <span>Total Words</span>
+          </div>
+        </div>
+      </Section>
+    </div>
+  </main>
+</PageLayout>

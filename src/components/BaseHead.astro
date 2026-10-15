@@ -1,0 +1,83 @@
+---
+import type { SiteMeta } from 'astro-pure/types'
+import config from '@/site-config'
+
+type Props = SiteMeta & {
+  robots?: 'noindex, follow' | 'noindex, nofollow'
+}
+
+const { description, modifiedDate, ogImage, publishedDate, robots, title } = Astro.props
+
+const siteTitle = `${title} ${config.titleDelimiter} ${config.title}`
+const canonicalURL = new URL(Astro.url.pathname, Astro.site)
+const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`
+const socialImageURL = new URL(ogImage ? ogImage : `${baseUrl}images/social-card.svg`, Astro.url)
+  .href
+const socialImageAlt = `${title} - ${config.title}`
+---
+
+<meta charset='utf-8' />
+<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
+<meta content='IE=edge' http-equiv='X-UA-Compatible' />
+<title>{siteTitle}</title>
+
+{/* Icons / Favicon */}
+<link rel='icon' type='image/svg+xml' href='/favicon/favicon.svg' />
+<link rel='manifest' href='/favicon/site.webmanifest' />
+
+{/* Canonical URL */}
+<link rel='canonical' href={canonicalURL} />
+
+{/* Primary Meta Tags */}
+<meta content={siteTitle} name='title' />
+<meta content={description} name='description' />
+<meta content={config.author} name='author' />
+{robots && <meta content={robots} name='robots' />}
+
+{/* Theme Color */}
+<meta content='' name='theme-color' />
+
+{/* Open Graph / Facebook */}
+<meta content={publishedDate ? 'article' : 'website'} property='og:type' />
+<meta content={title} property='og:title' />
+<meta content={description} property='og:description' />
+<meta content={canonicalURL} property='og:url' />
+<meta content={config.title} property='og:site_name' />
+<meta content={config.locale.attrs} property='og:locale' />
+<meta content={socialImageURL} property='og:image' />
+<meta content={socialImageAlt} property='og:image:alt' />
+{
+  publishedDate && (
+    <>
+      <meta content={config.author} property='article:author' />
+      <meta content={publishedDate} property='article:published_time' />
+      {modifiedDate && <meta content={modifiedDate} property='article:modified_time' />}
+    </>
+  )
+}
+
+{/* Twitter */}
+<meta content='summary_large_image' name='twitter:card' />
+<meta content={canonicalURL} name='twitter:url' />
+<meta content={title} name='twitter:title' />
+<meta content={description} name='twitter:description' />
+<meta content={socialImageURL} name='twitter:image' />
+<meta content={socialImageAlt} name='twitter:image:alt' />
+
+{/* Sitemap */}
+<link href='/sitemap-index.xml' rel='sitemap' />
+
+{/* RSS auto-discovery */}
+<link
+  rel='alternate'
+  type='application/rss+xml'
+  title={config.title}
+  href={new URL(`${baseUrl}rss.xml`, Astro.site)}
+/>
+
+<meta content={Astro.generator} name='generator' />
+
+{/* Styles */}
+<link rel='stylesheet' href='/styles/global.css' />

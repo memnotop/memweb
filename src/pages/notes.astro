@@ -1,0 +1,106 @@
+---
+import path from 'node:path'
+
+import PageLayout from '@/layouts/BaseLayout.astro'
+import { groupNotesByMonth, loadNotes } from '@/utils/notes'
+
+import '@/assets/styles/notes.css'
+
+export const prerender = true
+
+const notesPath = path.join(process.cwd(), 'src/data/notes.md')
+const notes = await loadNotes(notesPath)
+const noteMonths = groupNotesByMonth(notes)
+
+const meta = {
+  title: 'Notes',
+  description: 'Short thoughts, dated fragments, and working notes.'
+}
+---
+
+<PageLayout {meta} highlightColor='#6fa7b0'>
+  <main class='notes-page animate' id='content'>
+    <section class='notes-hero' aria-labelledby='notes-title'>
+      <div>
+        <p class='notes-eyebrow'>Notes</p>
+        <h1 id='notes-title'>Short Notes</h1>
+        <p>Short thoughts, dated fragments, and working notes.</p>
+      </div>
+
+      <div class='notes-stats' aria-label='Notes summary'>
+        <div class='notes-stat'>
+          <strong>{notes.length}</strong>
+          <span>{notes.length === 1 ? 'note' : 'notes'}</span>
+        </div>
+        <div class='notes-stat'>
+          <strong>{noteMonths.length}</strong>
+          <span>{noteMonths.length === 1 ? 'month' : 'months'}</span>
+        </div>
+      </div>
+    </section>
+
+    <div class='notes-toolbar' aria-label='Notes controls'>
+      <label class='notes-search'>
+        <span class='sr-only'>Search notes</span>
+        <input id='notes-search' type='search' placeholder='Search notes' autocomplete='off' />
+      </label>
+
+      <div class='notes-actions'>
+        <button id='notes-expand-all' type='button'>Expand all</button>
+        <button id='notes-collapse-all' type='button'>Collapse all</button>
+      </div>
+    </div>
+
+    {
+      noteMonths.length === 0 ? (
+        <p class='notes-empty'>No notes yet.</p>
+      ) : (
+        <section class='notes-timeline' aria-label='Notes timeline'>
+          {noteMonths.map((group) => (
+            <details class='notes-month' data-notes-month open>
+              <summary>
+                <span class='notes-month-title'>
+                  <strong>{group.label}</strong>
+                  <span>
+                    {group.entries.length} {group.entries.length === 1 ? 'note' : 'notes'}
+                  </span>
+                </span>
+              </summary>
+
+              <div class='notes-list'>
+                {group.entries.map((entry) => (
+                  <article
+                    class='notes-entry'
+                    data-note-entry
+                    data-note-content={entry.searchableText}
+                    id={entry.id}
+                  >
+                    <time class='notes-entry-date' datetime={entry.date}>
+                      <strong>{entry.day}</strong>
+                      <span>{entry.month}</span>
+                    </time>
+
+                    <div class='notes-entry-body'>
+                      {entry.title && <h2>{entry.title}</h2>}
+                      <div class='notes-markdown' set:html={entry.htmlBody} />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </details>
+          ))}
+        </section>
+      )
+    }
+
+    <p class='notes-empty' id='notes-empty' hidden>No matching notes.</p>
+  </main>
+
+  <Fragment slot='body-end'>
+    <script>
+      import { initNotesPage } from '@/scripts/notes'
+
+      initNotesPage()
+    </script>
+  </Fragment>
+</PageLayout>

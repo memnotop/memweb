@@ -1,0 +1,9 @@
+node_modules/**
+.astro/**
+dist/**
+.obsidian/**
+packages/pure/**
+public/scripts/*
+source/**
+src/content/**
+src/data/**

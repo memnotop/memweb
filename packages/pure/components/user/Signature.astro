@@ -1,0 +1,11 @@
+---
+import type { HTMLAttributes } from 'astro/types'
+
+interface Props extends HTMLAttributes<'div'> {}
+
+const { class: className, ...rest } = Astro.props
+---
+
+<div class:list={['signature-wrapper w-40 float-right mt-4', className]} {...rest}>
+  <span class='block border-t pt-2 text-sm text-muted-foreground'>Your name or signature</span>
+</div>

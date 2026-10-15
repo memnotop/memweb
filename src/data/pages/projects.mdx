@@ -1,0 +1,19 @@
+---
+title: Projects
+---
+
+import ProjectSection from '@/components/projects/ProjectSection.astro'
+
+export const websiteProjects = [
+  {
+    name: 'Example project',
+    description: 'Copy this entry and update its title, description, links, and optional image.',
+    links: [{ type: 'doc', href: '/about' }]
+  }
+]
+
+Use this page to showcase projects. Edit the arrays below with your own project details; remove sections you do not need.
+
+## Website
+
+<ProjectSection projects={websiteProjects} />

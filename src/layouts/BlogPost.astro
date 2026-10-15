@@ -1,0 +1,79 @@
+---
+import type { MarkdownHeading } from 'astro'
+import type { CollectionEntry } from 'astro:content'
+import config from 'virtual:config'
+
+// Plugin styles
+import 'katex/dist/katex.min.css'
+
+import { MediumZoom } from 'astro-pure/advanced'
+import { ArticleBottom, Hero, TOC } from 'astro-pure/components/pages'
+import { Signature } from 'astro-pure/user'
+import PageLayout from '@/layouts/ContentLayout.astro'
+import ArticleShare from '@/components/blog/ArticleShare.astro'
+import { Comment, PageInfo } from '@/components/waline'
+import { integ } from '@/site-config'
+
+interface Props {
+  post: CollectionEntry<'blog'>
+  posts: CollectionEntry<'blog'>[]
+  headings: MarkdownHeading[]
+  remarkPluginFrontmatter: Record<string, unknown>
+}
+
+const {
+  post: { id, data },
+  posts,
+  headings,
+  remarkPluginFrontmatter
+} = Astro.props
+
+const {
+  description,
+  publishDate,
+  title,
+  updatedDate,
+  draft: isDraft,
+  comment: enableComment
+} = data
+
+const socialImage =
+  typeof data.heroImageSrc === 'string'
+    ? data.heroImageSrc
+    : (data.heroImageSrc?.src ?? '/images/social-card.svg')
+const publishedDate = publishDate.toISOString()
+const modifiedDate = updatedDate?.toISOString()
+const primaryColor = data.heroImageColor ?? 'hsl(var(--primary) / var(--un-text-opacity))'
+---
+
+<PageLayout
+  meta={{ description, modifiedDate, ogImage: socialImage, publishedDate, title }}
+  highlightColor={primaryColor}
+  back='/blog'
+>
+  {!!headings.length && <TOC {headings} slot='sidebar' />}
+
+  <Hero {data} {remarkPluginFrontmatter} slot='header'>
+    <Fragment slot='description'>
+      {!isDraft && enableComment && <PageInfo comment class='mt-1' />}
+    </Fragment>
+  </Hero>
+
+  <slot />
+
+  {config.signature && <Signature />}
+  <Fragment slot='bottom'>
+    {/* Share */}
+    <ArticleShare {data} />
+    {/* Article recommend */}
+    <ArticleBottom collections={posts} {id} class='mt-3 sm:mt-6' />
+    {/* Comment */}
+    {!isDraft && enableComment && <Comment class='mt-3 sm:mt-6' />}
+  </Fragment>
+
+  <slot name='bottom-sidebar' slot='bottom-sidebar' />
+
+  <Fragment slot='body-end'>
+    {integ.mediumZoom.enable && <MediumZoom />}
+  </Fragment>
+</PageLayout>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#f5f8fa"/>
+  <circle cx="1030" cy="100" r="270" fill="#dceaf0"/>
+  <circle cx="110" cy="600" r="250" fill="#e5edf0"/>
+  <rect x="130" y="145" width="940" height="340" rx="32" fill="white" stroke="#d8e1e5" stroke-width="2"/>
+  <rect x="190" y="205" width="112" height="112" rx="26" fill="#e8f1f5"/>
+  <path d="M214 229h64v15h-51v15h44v14h-44v28h-13v-72Z" fill="#3d7187"/>
+  <circle cx="276" cy="299" r="7" fill="#e7a75e"/>
+  <text x="190" y="390" fill="#20323a" font-family="Arial, sans-serif" font-size="48" font-weight="700">Your Site Title</text>
+  <text x="190" y="438" fill="#60727a" font-family="Arial, sans-serif" font-size="24">A customizable Astro blog starter</text>
+</svg>

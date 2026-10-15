@@ -1,0 +1,247 @@
+---
+import { cn } from 'astro-pure/utils'
+import config from '@/site-config'
+
+const { class: className } = Astro.props
+---
+
+{
+  config.integ.waline.enable && (
+    <comment-component>
+      <div id='waline' class={cn('not-prose', className)}>
+        评论加载中。如果长时间没有显示，请刷新页面。
+      </div>
+    </comment-component>
+  )
+}
+
+<script>
+  import type { WalineEmojiPresets, WalineInstance } from '@waline/client'
+  import walineStyleUrl from '@waline/client/style?url'
+  import config from 'virtual:config'
+
+  const walineConfig = config.integ.waline
+  const walineStyleAttribute = 'data-waline-style'
+
+  const loadStylesheet = (href: string) =>
+    new Promise<void>((resolve) => {
+      const selector = `link[${walineStyleAttribute}="${href}"]`
+      if (document.querySelector(selector)) {
+        resolve()
+        return
+      }
+
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = href
+      link.setAttribute(walineStyleAttribute, href)
+      link.addEventListener('load', () => resolve(), { once: true })
+      link.addEventListener('error', () => resolve(), { once: true })
+      document.head.append(link)
+    })
+
+  class Comment extends HTMLElement {
+    loading = false
+    observer: IntersectionObserver | null = null
+    waline: WalineInstance | null = null
+
+    connectedCallback() {
+      if (this.waline || this.loading || this.observer) return
+
+      const Observer = (
+        window as Window & {
+          IntersectionObserver?: typeof IntersectionObserver
+        }
+      ).IntersectionObserver
+
+      if (Observer) {
+        this.observer = new Observer(
+          (entries) => {
+            if (!entries.some((entry) => entry.isIntersecting)) return
+
+            this.observer?.disconnect()
+            this.observer = null
+            void this.loadWaline()
+          },
+          { rootMargin: '600px 0px' }
+        )
+        this.observer.observe(this)
+        return
+      }
+
+      window.setTimeout(() => void this.loadWaline(), 0)
+    }
+
+    async loadWaline() {
+      if (this.waline || this.loading) return
+      this.loading = true
+
+      // Prevent Vue log errors
+      ;(globalThis as unknown as { __VUE_OPTIONS_API__: boolean }).__VUE_OPTIONS_API__ = true
+      ;(globalThis as unknown as { __VUE_PROD_DEVTOOLS__: boolean }).__VUE_PROD_DEVTOOLS__ = false
+      ;(
+        globalThis as unknown as { __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: boolean }
+      ).__VUE_PROD_HYDRATION_MISMATCH_DETAILS__ = false
+
+      const container = this.querySelector<HTMLElement>('#waline')
+      if (!container) {
+        this.loading = false
+        return
+      }
+
+      const emoji = walineConfig.emoji?.map(
+        (preset) => `${config.npmCDN}/@waline/emojis@1.2.0/${preset}` as WalineEmojiPresets
+      )
+
+      try {
+        const [{ init: walineInit }] = await Promise.all([
+          import('@waline/client'),
+          loadStylesheet(walineStyleUrl)
+        ])
+
+        this.waline = walineInit({
+          el: container,
+          serverURL: walineConfig.server || '',
+          emoji,
+          reaction: ['/icons/heart-item.svg'],
+          ...walineConfig.additionalConfigs
+        })
+      } catch {
+        container.textContent = '评论加载失败，请稍后刷新页面。'
+      } finally {
+        this.loading = false
+      }
+    }
+
+    disconnectedCallback() {
+      this.observer?.disconnect()
+      this.observer = null
+      this.waline?.destroy()
+      this.waline = null
+      this.loading = false
+    }
+  }
+
+  if (walineConfig.enable && !customElements.get('comment-component')) {
+    customElements.define('comment-component', Comment)
+  }
+</script>
+
+<style>
+  /* Basic theme */
+  #waline {
+    /* Font size */
+    --waline-font-size: 16px;
+    /* Basic color */
+    --waline-white: hsl(var(--background) / var(--un-bg-opacity, 1));
+    --waline-light-grey: #999;
+    --waline-dark-grey: #666;
+    /* Theme color */
+    --waline-theme-color: hsl(var(--foreground) / var(--un-text-opacity, 1));
+    --waline-active-color: hsl(var(--primary) / var(--un-text-opacity, 1));
+    /* Layout */
+    --waline-color: hsl(var(--muted-foreground) / var(--un-text-opacity, 1));
+    --waline-bg-color: hsl(var(--muted) / var(--un-bg-opacity, 1));
+    --waline-bg-color-light: hsl(var(--input) / var(--un-text-opacity, 1));
+    --waline-bg-color-hover: #f0f0f0;
+    --waline-border-color: hsl(var(--border) / var(--un-border-opacity, 1));
+    --waline-disable-bg-color: #f8f8f8;
+    --waline-disable-color: #bbb;
+    --waline-code-bg-color: #282c34;
+    /* Special */
+    --waline-bq-color: #f0f0f0;
+    /* Avatar */
+    --waline-avatar-size: 3.25rem;
+    --waline-m-avatar-size: calc(var(--waline-avatar-size) * 9 / 13);
+    /* Badge */
+    --waline-badge-color: hsl(var(--border) / var(--un-border-opacity, 1));
+    --waline-badge-font-size: 0.775em;
+    /* Info */
+    --waline-info-bg-color: var(--waline-bg-color-light);
+    --waline-info-color: var(--waline-color);
+    --waline-info-font-size: 0.625em;
+    /* Render selection */
+    --waline-border: 1px solid var(--waline-border-color);
+    --waline-avatar-radius: 50%;
+    --waline-box-shadow: none;
+  }
+
+  /* Fix long text and links overflow */
+  #waline :global(.wl-content, .wl-text, .wl-comment-text) {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+
+  #waline :global(a) {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+    display: inline-block;
+  }
+
+  #waline :global(.wl-item, .wl-card-item) {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  #waline :global(.wl-meta) {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* Reaction buttons */
+  #waline :global(.wl-reaction-title, .wl-reaction-text) {
+    display: none;
+  }
+  #waline :global(.wl-reaction) {
+    overflow: visible;
+    margin-bottom: 0.5em;
+  }
+  #waline :global(.wl-reaction-img) {
+    width: auto;
+    display: flex;
+    height: 35px;
+    align-items: center;
+    column-gap: 0.4rem;
+  }
+  #waline :global(.wl-reaction-votes) {
+    position: inherit;
+    top: inherit;
+    min-width: inherit;
+    inset-inline-end: inherit;
+    display: flex;
+    font-weight: normal;
+    border: none;
+    background: none;
+    color: inherit;
+    padding: 0.2rem 0.4rem;
+    border-radius: 6px;
+  }
+  #waline :global(.wl-reaction-loading) {
+    position: inherit;
+    top: inherit;
+    min-width: inherit;
+  }
+  #waline :global(.wl-reaction-item.active .wl-reaction-votes) {
+    background: var(--waline-theme-color);
+    color: var(--waline-bg-color);
+  }
+
+  #waline :global(.wl-reaction-votes:after) {
+    margin-left: 0.25em;
+    content: 'Like(s)';
+    display: inline-block;
+    clear: both;
+    border: 0;
+  }
+  #waline :global(.wl-reaction img) {
+    filter: invert(25%);
+  }
+  :global(.dark) #waline :global(.wl-reaction img) {
+    filter: invert(75%);
+  }
+</style>
